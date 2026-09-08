@@ -6,6 +6,10 @@
     "directory": "./public",
     "binding": "ASSETS"
   },
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "blastradius.win", "custom_domain": true }
+  ],
   "d1_databases": [
     {
       "binding": "DB",
