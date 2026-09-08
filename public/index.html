@@ -1,0 +1,1029 @@
+<title>Blast Radius</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+
+<style>
+/* Discs on a dark table. Flat saturated fields, heavy keylines, two suits:
+   the rose is safe, the skull can cost you. Committed single theme. */
+:root {
+  color-scheme: dark;
+  --table:   #14120F;
+  --felt:    #1D1A16;
+  --raise:   #262119;
+  --key:     #0A0907;
+  --bone:    #EFE6D2;
+  --bone-2:  #B6AC96;
+  --bone-3:  #7C7362;
+  --cobalt:  #3F7FDE;
+  --crimson: #D8443C;
+  --gold:    #E8A317;
+  --jade:    #3FA87C;
+  --ember:   #E4772E;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(120% 80% at 50% 0%, #1E1A15 0%, var(--table) 62%);
+  background-color: var(--table);
+  color: var(--bone);
+  font-family: "Plus Jakarta Sans", "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .88em; background: var(--key);
+  padding: 1px 5px; border-radius: 4px; color: var(--gold);
+}
+
+.wrap { max-width: 1200px; margin: 0 auto; padding: 26px 20px 72px;
+  display: flex; flex-direction: column; gap: 18px; }
+
+.eyebrow {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.17em;
+  text-transform: uppercase; color: var(--bone-3);
+}
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---------- masthead ---------- */
+
+.masthead {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
+  gap: 16px 26px; padding-bottom: 18px; border-bottom: 2px solid var(--key);
+}
+.brand { display: flex; flex-direction: column; gap: 6px; }
+.brand h1 {
+  margin: 0; font-family: Anton, Impact, "Arial Narrow Bold", sans-serif;
+  font-size: 52px; font-weight: 400; line-height: .88;
+  letter-spacing: 0.005em; text-transform: uppercase; color: var(--bone);
+}
+.brand h1 em { font-style: normal; color: var(--crimson); }
+.brand p { margin: 0; color: var(--bone-2); font-size: 13.5px; max-width: 52ch; }
+.modes { display: flex; gap: 7px; }
+
+.btn {
+  font-family: inherit; font-size: 12px; font-weight: 700;
+  letter-spacing: .05em; text-transform: uppercase;
+  padding: 8px 15px; border: 2px solid var(--key);
+  background: var(--raise); color: var(--bone-2);
+  border-radius: 999px; cursor: pointer;
+  transition: background .13s, color .13s, transform .13s;
+}
+.btn:hover:not(:disabled) { color: var(--bone); transform: translateY(-1px); }
+.btn[aria-pressed="true"] { background: var(--bone); color: var(--key); }
+.btn:disabled { opacity: .35; cursor: not-allowed; }
+.btn.primary { background: var(--gold); color: var(--key); }
+.btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
+
+:where(button, input, [tabindex]):focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+/* ---------- gauges ---------- */
+
+.gauges { display: grid; grid-template-columns: repeat(auto-fit, minmax(184px, 1fr)); gap: 12px; }
+.gauge {
+  background: var(--felt); border: 2px solid var(--key);
+  border-radius: 14px; padding: 12px 16px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.gauge .v {
+  font-family: Anton, Impact, sans-serif; font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  font-size: 34px; line-height: 1; letter-spacing: .01em;
+}
+.gauge .v small { font-family: "Plus Jakarta Sans", sans-serif; font-size: 12px; color: var(--bone-3); font-weight: 700; margin-left: 4px; }
+.gauge .note { font-size: 11.5px; color: var(--bone-3); font-weight: 600; }
+.gauge .bar { height: 6px; border-radius: 999px; background: var(--key); overflow: hidden; margin-top: 4px; }
+.gauge .bar i { display: block; height: 100%; border-radius: 999px; transition: width .4s cubic-bezier(.2,.7,.3,1); }
+.gauge.clock .bar i { background: var(--cobalt); }
+.gauge.blast .v { color: var(--crimson); }
+.gauge.blast .bar i { background: var(--crimson); }
+.gauge.sev .v { font-size: 27px; }
+.sev-ok { color: var(--jade) } .sev-warn { color: var(--ember) } .sev-crit { color: var(--crimson) }
+
+/* ---------- panels ---------- */
+
+.panel { background: var(--felt); border: 2px solid var(--key); border-radius: 16px; overflow: hidden; }
+.panel-head {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 13px 18px; border-bottom: 2px solid var(--key); background: var(--raise);
+}
+.panel-head h2 {
+  margin: 0; font-family: Anton, Impact, sans-serif; font-weight: 400;
+  font-size: 19px; letter-spacing: .035em; text-transform: uppercase;
+}
+.panel-head .hint { color: var(--bone-3); font-size: 12px; }
+.panel-body { padding: 16px 18px 18px; }
+
+.cols { display: grid; grid-template-columns: 1.05fr 1fr; gap: 18px; align-items: start; }
+@media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+
+/* ---------- suspects ---------- */
+
+.suspects { display: flex; flex-direction: column; gap: 7px; }
+.suspect {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 11px; align-items: center;
+  padding: 10px 13px; border: 2px solid var(--key); border-radius: 11px;
+  background: var(--raise); transition: opacity .2s, background .2s;
+}
+.suspect .pip {
+  width: 15px; height: 15px; border-radius: 999px;
+  background: var(--bone-3); border: 2px solid var(--key);
+}
+.suspect .nm { font-size: 13.5px; font-weight: 700; }
+.suspect .fl { font-size: 11.5px; color: var(--bone-3); font-weight: 500; }
+.suspect .tag {
+  font-size: 9.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+  padding: 4px 9px; border-radius: 999px; background: var(--key); color: var(--bone-3);
+  white-space: nowrap;
+}
+.suspect.out { opacity: .34; }
+.suspect.lean .pip { background: var(--cobalt); }
+.suspect.lean .tag { color: var(--cobalt); }
+.suspect.hot { background: #2E2018; }
+.suspect.hot .pip { background: var(--crimson); }
+.suspect.hot .tag { background: var(--crimson); color: var(--key); }
+
+/* ---------- evidence ---------- */
+
+.log { display: flex; flex-direction: column; gap: 11px; max-height: 388px; overflow-y: auto; }
+.entry { border-left: 3px solid var(--bone-3); padding: 1px 0 1px 12px; display: flex; flex-direction: column; gap: 3px; }
+.entry.low { border-left-color: var(--gold); }
+.entry.busted { border-left-color: var(--crimson); }
+.entry .top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--bone-3); }
+.entry .txt { font-size: 13.5px; color: var(--bone); }
+.conf { font-size: 9px; font-weight: 800; letter-spacing: .1em;
+  padding: 3px 7px; border-radius: 999px; background: var(--key); }
+.conf.high { color: var(--jade); } .conf.med { color: var(--cobalt); } .conf.low { color: var(--gold); }
+.empty { color: var(--bone-3); font-size: 13px; }
+
+/* ---------- the discs ---------- */
+
+.hand { display: flex; flex-wrap: wrap; gap: 20px; }
+.token {
+  width: 168px; background: none; border: none; padding: 0; cursor: pointer;
+  font-family: inherit; color: var(--bone); text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  transition: transform .16s cubic-bezier(.2,.7,.3,1);
+}
+.token:hover:not(:disabled) { transform: translateY(-7px) rotate(-1.2deg); }
+.token:disabled { opacity: .3; cursor: not-allowed; }
+
+.disc {
+  position: relative; width: 132px; height: 132px; border-radius: 999px;
+  border: 4px solid var(--key);
+  display: grid; place-items: center;
+  box-shadow: 0 6px 0 var(--key), 0 16px 26px -12px rgba(0,0,0,.85);
+}
+.token.probe .disc { background: var(--cobalt); }
+.token.act   .disc { background: var(--crimson); }
+.disc::after {
+  content: ""; position: absolute; inset: 9px; border-radius: 999px;
+  border: 2px solid rgba(10,9,7,.42);
+}
+.disc .emblem { position: absolute; top: 15px; width: 27px; height: 27px; }
+.disc .n {
+  font-family: Anton, Impact, sans-serif; font-weight: 400;
+  font-size: 47px; line-height: 1; color: var(--bone);
+  margin-top: 26px; text-shadow: 0 2px 0 rgba(10,9,7,.5);
+}
+.disc .u { position: absolute; bottom: 20px; font-size: 9px; font-weight: 800;
+  letter-spacing: .18em; color: rgba(239,230,210,.72); }
+
+.cap { display: flex; flex-direction: column; gap: 4px; }
+.cap .kind { font-size: 9.5px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+.token.probe .cap .kind { color: var(--cobalt); }
+.token.act   .cap .kind { color: var(--crimson); }
+.cap h3 { margin: 0; font-size: 14px; font-weight: 800; line-height: 1.22; letter-spacing: -.01em; }
+.cap .eff { font-size: 11px; color: var(--bone-3); line-height: 1.4; font-weight: 500; }
+.cap .eff.risk { color: var(--gold); }
+
+.handbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.deckcount { font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--bone-3); }
+
+/* ---------- declare ---------- */
+
+.declare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(212px, 1fr)); gap: 10px; }
+.dopt {
+  text-align: left; background: var(--raise); border: 2px solid var(--key);
+  border-radius: 12px; padding: 12px 14px; cursor: pointer; color: var(--bone);
+  font-family: inherit; display: flex; flex-direction: column; gap: 3px;
+  transition: background .13s, transform .13s;
+}
+.dopt:hover { background: #302921; transform: translateY(-2px); }
+.dopt[aria-pressed="true"] { background: var(--gold); color: var(--key); }
+.dopt[aria-pressed="true"] .fl { color: rgba(10,9,7,.72); }
+.dopt .nm { font-size: 14px; font-weight: 800; }
+.dopt .fl { font-size: 11.5px; color: var(--bone-3); }
+.dopt.ruled { opacity: .36; }
+.conf-pick { display: flex; flex-wrap: wrap; gap: 8px; }
+.conf-pick .btn small { display: block; font-weight: 600; font-size: 10px; letter-spacing: .02em; text-transform: none; opacity: .8; }
+
+/* ---------- result ---------- */
+
+.result-hero { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 20px;
+  padding-bottom: 15px; border-bottom: 2px solid var(--key); margin-bottom: 15px; }
+.result-hero .score {
+  font-family: Anton, Impact, sans-serif; font-weight: 400; font-variant-numeric: tabular-nums;
+  font-size: 68px; line-height: .9; letter-spacing: .01em;
+}
+.verdict-tag { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+  padding: 7px 14px; border-radius: 999px; border: 2px solid var(--key); }
+.verdict-tag.win { background: var(--jade); color: var(--key); }
+.verdict-tag.miss { background: var(--crimson); color: var(--key); }
+
+.ledger { display: flex; flex-direction: column; }
+.ledger .li { display: grid; grid-template-columns: 1fr auto; gap: 12px;
+  padding: 9px 0; border-bottom: 1px solid var(--key); font-size: 13.5px; }
+.ledger .li:last-child { border-bottom: none; }
+.ledger .li .n { font-variant-numeric: tabular-nums; font-weight: 800; }
+.ledger .li .n.pos { color: var(--jade); } .ledger .li .n.neg { color: var(--crimson); }
+.ledger .li.total { font-weight: 800; border-top: 3px solid var(--key); padding-top: 12px; }
+.ledger .li .sub { display: block; font-size: 11.5px; color: var(--bone-3); font-weight: 500; }
+
+.share-box {
+  background: var(--key); border: 2px solid var(--key); border-radius: 12px;
+  padding: 14px 16px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px; line-height: 1.7; white-space: pre-wrap; color: var(--bone-2);
+}
+
+/* ---------- board ---------- */
+
+.lb { display: flex; flex-direction: column; gap: 2px; }
+.lb .row { display: grid; grid-template-columns: 34px 1fr auto auto; gap: 12px; align-items: center;
+  background: var(--raise); border: 2px solid var(--key); border-radius: 10px; padding: 9px 13px; font-size: 13px; }
+.lb .row.me { background: #2E2018; }
+.lb .rk { font-family: Anton, Impact, sans-serif; font-size: 17px; color: var(--bone-3); }
+.lb .who { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb .tag2 { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--bone-3); }
+.lb .sc { font-family: Anton, Impact, sans-serif; font-size: 19px; font-variant-numeric: tabular-nums; }
+.namerow { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+input.handle {
+  font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 999px;
+  border: 2px solid var(--key); background: var(--raise); color: var(--bone); min-width: 170px;
+}
+input.handle::placeholder { color: var(--bone-3); }
+
+.stack { display: flex; flex-direction: column; gap: 13px; }
+.rowwrap { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@media (max-width: 640px) {
+  .brand h1 { font-size: 38px; }
+  .wrap { padding: 18px 13px 54px; }
+  .result-hero .score { font-size: 50px; }
+  .hand { gap: 16px; justify-content: center; }
+}
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="brand">
+      <span class="eyebrow">A game about being the on-call agent</span>
+      <h1>Blast <em>Radius</em></h1>
+      <p>Something is broken. You can stop the bleeding or you can find out why. The incident keeps burning either way.</p>
+    </div>
+    <div class="stack" style="gap:8px;align-items:flex-end">
+      <span class="eyebrow" id="incidentId">Incident</span>
+      <div class="modes">
+        <button class="btn" id="modeDaily" aria-pressed="true">Today's incident</button>
+        <button class="btn" id="modePractice" aria-pressed="false">Practice</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="gauges" id="gauges"></section>
+
+  <section class="panel" id="handPanel">
+    <div class="panel-head">
+      <h2>Your hand</h2>
+      <span class="hint" id="handHint">Every card costs minutes, and minutes cost customers. Right-click a card to bin it for 1 minute.</span>
+      <div class="rowwrap">
+        <span class="deckcount" id="deckCount"></span>
+        <button class="btn" id="btnDeclare">Name the cause</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="hand" id="hand"></div>
+    </div>
+  </section>
+
+  <section class="cols">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Suspects</h2>
+        <span class="hint">Six ways this system fails</span>
+      </div>
+      <div class="panel-body"><div class="suspects" id="suspects"></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>What you know</h2>
+        <span class="hint" id="logHint">Findings land here</span>
+      </div>
+      <div class="panel-body"><div class="log" id="log"></div></div>
+    </div>
+  </section>
+
+  <section class="panel" id="declarePanel" hidden>
+    <div class="panel-head">
+      <h2>Name the cause</h2>
+      <span class="hint">Stake a claim. How sure you are changes both the reward and the damage.</span>
+    </div>
+    <div class="panel-body stack">
+      <div class="declare-grid" id="declareGrid"></div>
+      <div class="stack" style="gap:8px">
+        <span class="eyebrow">How confident are you</span>
+        <div class="conf-pick" id="confPick"></div>
+      </div>
+      <div class="rowwrap">
+        <button class="btn primary" id="btnCommit" disabled>Commit the call</button>
+        <button class="btn" id="btnCancelDeclare">Keep working</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="resultPanel" hidden>
+    <div class="panel-head">
+      <h2>Postmortem</h2>
+      <span class="hint" id="resultSub"></span>
+    </div>
+    <div class="panel-body stack">
+      <div class="rowwrap"><span class="eyebrow" id="bestLine"></span></div>
+      <div class="result-hero">
+        <span class="score" id="finalScore">0</span>
+        <span class="verdict-tag" id="verdictTag">—</span>
+        <span style="color:var(--bone-2);font-size:13.5px" id="truthLine"></span>
+      </div>
+      <div class="ledger" id="ledger"></div>
+      <div class="stack" style="gap:9px">
+        <span class="eyebrow">Share it</span>
+        <div class="share-box" id="shareBox"></div>
+        <div class="rowwrap">
+          <button class="btn primary" id="btnCopy">Copy result</button>
+          <button class="btn" id="btnAgain">Play again</button>
+        </div>
+      </div>
+      <div class="stack" style="gap:9px" id="lbWrap" hidden>
+        <span class="eyebrow">Today's board</span>
+        <div class="namerow">
+          <input class="handle" id="handleIn" maxlength="18" placeholder="Your handle" autocomplete="off">
+          <button class="btn" id="btnPost">Post my score</button>
+          <span class="hint" id="postMsg" style="color:var(--bone-3);font-size:12px"></span>
+        </div>
+        <div class="lb" id="lbList"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="eyebrow" style="padding-top:6px">
+    Scenarios are failure archetypes, not any company's real outage.
+  </footer>
+
+</div>
+
+<script>
+"use strict";
+
+const $ = (s) => document.querySelector(s);
+const el = (t, c) => { const n = document.createElement(t); if (c) n.className = c; return n; };
+
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+const fmt = (n) => Math.round(n).toLocaleString();
+
+/* ============================== content ============================== */
+
+const CAUSES = [
+  { id: "c1", nm: "Bad config push",    fl: "A flag went to 100% and nobody watched it" },
+  { id: "c2", nm: "Retry storm",        fl: "Clients hammering you harder the worse it gets" },
+  { id: "c3", nm: "Pool exhaustion",    fl: "Every database connection is spoken for" },
+  { id: "c4", nm: "Expired certificate",fl: "An internal cert lapsed at the worst hour" },
+  { id: "c5", nm: "Noisy neighbour",    fl: "Someone else's workload is eating the node" },
+  { id: "c6", nm: "Upstream provider",  fl: "A third party is down and being coy about it" }
+];
+
+// A probe asks one question. What comes back depends on the true cause.
+const PROBES = [
+  { id: "deploy", t: "Read the deploy log", cost: 2, conf: "high", hit: ["c1"],
+    fl: "Thirty seconds of scrolling. Usually the fastest answer in the building.",
+    yes: "A change to <code>checkout_v2</code> went to 100% four minutes before onset.",
+    no:  "Last deploy was six days ago. Nothing shipped today." },
+
+  { id: "clients", t: "Break errors down by client", cost: 3, conf: "high", hit: ["c2"],
+    fl: "Group the failures by SDK version and see who is shouting loudest.",
+    yes: "Volume is 6x normal, almost all of it three old SDK versions retrying with no backoff.",
+    no:  "Traffic is flat and evenly spread across every client version." },
+
+  { id: "pool", t: "Check the connection pool", cost: 2, conf: "high", hit: ["c3"],
+    fl: "One number tells you whether the database is the victim or the culprit.",
+    yes: "Pool is pinned at 100% with 800 queries queued behind it.",
+    no:  "Pool is sitting at 12%. Plenty of headroom." },
+
+  { id: "certs", t: "Check certificate expiry", cost: 2, conf: "high", hit: ["c4"],
+    fl: "Boring, unglamorous, and right about twice a year.",
+    yes: "The internal mTLS cert for <code>payments-gw</code> expired at 14:00 today.",
+    no:  "Every cert in the mesh is valid for another forty days." },
+
+  { id: "nodes", t: "Check node pressure", cost: 2, conf: "med", hit: ["c5"],
+    fl: "Are your machines actually yours right now.",
+    yes: "CPU steal time is at 40% on six of nine nodes. You are not alone on this hardware.",
+    no:  "Steal time is normal. The nodes are healthy and bored." },
+
+  { id: "status", t: "Check the provider status page", cost: 1, conf: "low", hit: ["c6"], risk: true,
+    fl: "Cheap, fast, and famously the last thing on the internet to turn red.",
+    yes: "Their status page finally went amber: <code>investigating elevated errors</code>.",
+    no:  "All green. They say everything is fine." },
+
+  { id: "trace", t: "Pull a trace from a failing request", cost: 4, conf: "high", hit: ["c3", "c4", "c6"],
+    fl: "Expensive in minutes. Cuts through three theories at once.",
+    yes: "The span <code>payments-gw.call</code> hangs for 30s and dies on connection reset.",
+    no:  "Failure starts in the app tier, before anything downstream is even called." },
+
+  { id: "errshape", t: "Look at the error mix", cost: 2, conf: "med", hit: ["c1", "c2"],
+    fl: "The shape of a failure says a lot about where it was born.",
+    yes: "Clean 503s at the edge. Not one application exception underneath.",
+    no:  "A messy mix of app exceptions and downstream timeouts." }
+];
+
+const ACTIONS = [
+  { id: "shed", t: "Shed non-critical traffic", cost: 2,
+    fl: "Turn off recommendations, reviews, and the loyalty widget. Nobody will notice today.",
+    eff: "Impact ×0.70 whatever the cause", mult: () => 0.70, burn: 0 },
+
+  { id: "scale", t: "Scale up the replicas", cost: 2,
+    fl: "The reflex. Sometimes it is exactly wrong.",
+    eff: "Impact ×0.85, unless you are feeding a storm", risk: true,
+    mult: (c) => (c === "c2" ? 1.15 : 0.85), burn: 0 },
+
+  { id: "ratelimit", t: "Turn on aggressive rate limiting", cost: 3,
+    fl: "Tell the loudest clients to sit down. They will not enjoy it.",
+    eff: "Huge against a storm, mild otherwise",
+    mult: (c) => (c === "c2" ? 0.35 : 0.90), burn: 0 },
+
+  { id: "rollback", t: "Roll back the last deploy", cost: 4,
+    fl: "The big red button. It also erases the scene of the crime.",
+    eff: "Decisive against a bad push · burns 2 unplayed probes", risk: true,
+    mult: (c) => (c === "c1" ? 0.25 : 1.0), burn: 2 },
+
+  { id: "failover", t: "Fail over to the standby region", cost: 6,
+    fl: "Move everyone somewhere clean. You will never know what happened here.",
+    eff: "Impact ×0.40 whatever the cause · burns 3 unplayed probes", risk: true,
+    mult: () => 0.40, burn: 3 },
+
+  { id: "bounce", t: "Bounce the connection pools", cost: 2,
+    fl: "Have you tried turning the connections off and on again.",
+    eff: "Strong if the pool is starved, near useless otherwise",
+    mult: (c) => (c === "c3" ? 0.40 : 0.95), burn: 0 },
+
+  { id: "bypass", t: "Bypass the payments gateway", cost: 3,
+    fl: "Queue the charges, take the orders, apologise to finance on Monday.",
+    eff: "Strong if the problem is downstream",
+    mult: (c) => (c === "c4" || c === "c6" ? 0.45 : 0.95), burn: 0 }
+];
+
+const CONFIDENCE = [
+  { id: "hunch",   nm: "A hunch",     sub: "+200 right · −100 wrong", win: 200, lose: -100 },
+  { id: "likely",  nm: "Likely",      sub: "+400 right · −300 wrong", win: 400, lose: -300 },
+  { id: "certain", nm: "I'm certain", sub: "+700 right · −600 wrong", win: 700, lose: -600 }
+];
+
+const START_MIN = 30;
+const BASE_RATE = 300;      // customers per minute at full severity
+const HAND_SIZE = 5;
+
+/* ============================== state ============================== */
+
+let G = null;
+let MODE = "daily";
+let PICK = { cause: null, conf: null };
+let DB = null;
+let LB_UNSUB = null;
+
+function todayKey() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
+function newGame(practiceSeedBump) {
+  const key = MODE === "daily" ? "daily:" + todayKey() : "practice:" + practiceSeedBump;
+  const rng = mulberry32(hashStr(key));
+
+  const cause = CAUSES[Math.floor(rng() * CAUSES.length)].id;
+
+  const deck = [
+    ...PROBES.map(p => ({ ...p, kind: "probe" })),
+    ...ACTIONS.map(a => ({ ...a, kind: "act" }))
+  ];
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+
+  // A low-confidence probe lies some of the time. Decide now, reveal never.
+  const liars = {};
+  for (const p of PROBES) {
+    if (p.conf === "low") liars[p.id] = rng() < 0.55;
+    else if (p.conf === "med") liars[p.id] = rng() < 0.15;
+    else liars[p.id] = false;
+  }
+
+  G = {
+    key, seedLabel: MODE === "daily" ? todayKey() : "practice " + practiceSeedBump,
+    cause, deck, liars,
+    hand: [], played: [], clues: [],
+    minsLeft: START_MIN, impact: 0, rate: BASE_RATE,
+    over: false, result: null
+  };
+  draw();
+  PICK = { cause: null, conf: null };
+  $("#declarePanel").hidden = true;
+  $("#resultPanel").hidden = true;
+  $("#handPanel").hidden = false;
+  render();
+}
+
+function draw() {
+  while (G.hand.length < HAND_SIZE && G.deck.length) G.hand.push(G.deck.shift());
+}
+
+/* ============================== play ============================== */
+
+function spend(mins) {
+  const used = Math.min(mins, G.minsLeft);
+  G.impact += G.rate * used;
+  G.minsLeft -= used;
+}
+
+function playCard(idx) {
+  if (G.over) return;
+  const card = G.hand[idx];
+  if (!card || card.cost > G.minsLeft) return;
+
+  G.hand.splice(idx, 1);
+  spend(card.cost);
+  G.played.push(card.id);
+
+  if (card.kind === "probe") {
+    const positive = card.hit.includes(G.cause);
+    const lying = G.liars[card.id];
+    // A lying probe reports the answer for a world where the cause is something else.
+    const reported = lying ? !positive : positive;
+    G.clues.push({
+      probe: card.id, title: card.t, conf: card.conf,
+      text: reported ? card.yes : card.no,
+      positive: reported, hit: card.hit, lying
+    });
+  } else {
+    G.rate = Math.max(6, G.rate * card.mult(G.cause));
+    if (card.burn > 0) {
+      const gone = [];
+      for (let i = 0; i < card.burn; i++) {
+        const pi = G.deck.findIndex(c => c.kind === "probe");
+        if (pi >= 0) gone.push(G.deck.splice(pi, 1)[0].t);
+        else {
+          const hi = G.hand.findIndex(c => c.kind === "probe");
+          if (hi >= 0) gone.push(G.hand.splice(hi, 1)[0].t);
+        }
+      }
+      if (gone.length) {
+        G.clues.push({ burned: true, title: card.t, text: "Evidence gone with it: " + gone.join(", ") + "." });
+      }
+    }
+  }
+
+  draw();
+  if (G.minsLeft <= 0) { openDeclare(true); }
+  render();
+}
+
+function discard(idx) {
+  if (G.over || G.minsLeft < 1) return;
+  G.hand.splice(idx, 1);
+  spend(1);
+  draw();
+  render();
+}
+
+/* ============================== deduction view ============================== */
+
+// What the evidence, taken at face value, says about each suspect.
+function standing() {
+  const st = {};
+  for (const c of CAUSES) st[c.id] = { out: false, for: 0 };
+  for (const cl of G.clues) {
+    if (cl.burned) continue;
+    if (cl.positive) { for (const id of cl.hit) st[id].for += 1; }
+    else { for (const id of cl.hit) st[id].out = true; }
+  }
+  return st;
+}
+
+/* ============================== scoring ============================== */
+
+function finish(declaredCause, confId) {
+  const conf = CONFIDENCE.find(c => c.id === confId);
+  const correct = declaredCause === G.cause;
+
+  // The incident does not pause because you stopped playing. Whatever severity
+  // you leave behind runs out the rest of the window.
+  const worked = G.impact;
+  const residual = G.rate * G.minsLeft;
+  G.impact = worked + residual;
+
+  const impactPenalty = -Math.floor(G.impact / 25);
+  const callPoints = correct ? conf.win : conf.lose;
+  const total = 1000 + impactPenalty + callPoints;
+
+  G.over = true;
+  G.result = {
+    correct, declaredCause, conf, total, worked, residual,
+    lines: [
+      { k: "Starting position", v: 1000 },
+      { k: "Hit while you worked", sub: fmt(worked) + " customers over " + (START_MIN - G.minsLeft) + " min", v: -Math.floor(worked / 25) },
+      { k: "Hit after you stopped", sub: G.minsLeft + " min still running at " + Math.round(G.rate) + "/min", v: -(impactPenalty * -1 - Math.floor(worked / 25)) },
+      { k: correct ? "Called it right" : "Called it wrong", sub: conf.nm.toLowerCase(), v: callPoints }
+    ]
+  };
+  render();
+  renderResult();
+}
+
+/* ============================== render ============================== */
+
+function render() {
+  $("#incidentId").textContent = MODE === "daily"
+    ? "Incident " + todayKey()
+    : "Practice run";
+  $("#modeDaily").setAttribute("aria-pressed", String(MODE === "daily"));
+  $("#modePractice").setAttribute("aria-pressed", String(MODE === "practice"));
+
+  renderGauges();
+  renderSuspects();
+  renderLog();
+  renderHand();
+}
+
+function renderGauges() {
+  const sevPct = G.rate / BASE_RATE;
+  const sevCls = sevPct > 0.66 ? "sev-crit" : sevPct > 0.33 ? "sev-warn" : "sev-ok";
+  const sevWord = sevPct > 0.66 ? "Bleeding" : sevPct > 0.33 ? "Slowing" : "Contained";
+  $("#gauges").innerHTML =
+    '<div class="gauge clock"><span class="eyebrow">Time left</span>' +
+      '<span class="v">' + G.minsLeft + '<small>min</small></span>' +
+      '<span class="bar"><i style="width:' + (G.minsLeft / START_MIN * 100) + '%"></i></span></div>' +
+    '<div class="gauge blast"><span class="eyebrow">Customers hit</span>' +
+      '<span class="v">' + fmt(G.impact) + '</span>' +
+      '<span class="note">+' + fmt(G.rate * G.minsLeft) + ' more if nothing changes</span>' +
+      '<span class="bar"><i style="width:' + Math.min(100, G.impact / 9000 * 100) + '%"></i></span></div>' +
+    '<div class="gauge sev"><span class="eyebrow">Right now</span>' +
+      '<span class="v ' + sevCls + '">' + sevWord + '</span>' +
+      '<span class="note">' + Math.round(G.rate) + ' customers / min</span></div>' +
+    '<div class="gauge"><span class="eyebrow">Evidence</span>' +
+      '<span class="v">' + G.clues.filter(c => !c.burned).length + '<small>/ 8</small></span>' +
+      '<span class="note">findings in hand</span></div>';
+}
+
+function renderSuspects() {
+  const st = standing();
+  const box = $("#suspects");
+  box.innerHTML = "";
+  for (const c of CAUSES) {
+    const s = st[c.id];
+    const cls = s.out ? "out" : s.for >= 2 ? "hot" : s.for === 1 ? "lean" : "";
+    const tag = s.out ? "ruled out" : s.for >= 2 ? "strong" : s.for === 1 ? "points here" : "open";
+    const row = el("div", "suspect " + cls);
+    row.innerHTML = '<span class="dot"></span>' +
+      '<span><span class="nm">' + c.nm + '</span><br><span class="fl">' + c.fl + '</span></span>' +
+      '<span class="tag">' + tag + '</span>';
+    box.append(row);
+  }
+}
+
+function renderLog() {
+  const box = $("#log");
+  box.innerHTML = "";
+  if (!G.clues.length) {
+    box.innerHTML = '<p class="empty">Nothing yet. Every finding you buy shows up here, with how much you should trust it.</p>';
+    return;
+  }
+  for (const cl of [...G.clues].reverse()) {
+    const e = el("div", "entry " + (cl.burned ? "busted" : cl.conf === "low" ? "low" : ""));
+    const confTag = cl.burned ? "" :
+      '<span class="conf ' + (cl.conf === "high" ? "high" : cl.conf === "med" ? "med" : "low") + '">' +
+      (cl.conf === "high" ? "solid" : cl.conf === "med" ? "probably" : "shaky") + '</span>';
+    e.innerHTML = '<span class="top">' + (cl.burned ? "LOST" : cl.title) + confTag + '</span>' +
+                  '<span class="txt">' + cl.text + '</span>';
+    box.append(e);
+  }
+}
+
+function renderHand() {
+  const box = $("#hand");
+  box.innerHTML = "";
+  $("#deckCount").textContent = G.deck.length + " left in the deck";
+
+  if (!G.hand.length) {
+    box.innerHTML = '<p class="empty">Deck is empty. Time to make the call.</p>';
+    return;
+  }
+  G.hand.forEach((card, i) => {
+    const risky = !!card.risk || card.conf === "low";
+    const b = el("button", "token " + card.kind);
+    b.disabled = G.over || card.cost > G.minsLeft;
+    const eff = card.kind === "probe"
+      ? "Reveals a finding · " + (card.conf === "high" ? "solid" : card.conf === "med" ? "probably true" : "shaky")
+      : card.eff;
+    b.innerHTML =
+      '<span class="disc">' + emblem(risky) +
+        '<span class="n">' + card.cost + '</span><span class="u">MIN</span>' +
+      '</span>' +
+      '<span class="cap">' +
+        '<span class="kind">' + (card.kind === "probe" ? "Investigate" : "Mitigate") + '</span>' +
+        '<h3>' + card.t + '</h3>' +
+        '<span class="eff' + (risky ? " risk" : "") + '">' + eff + '</span>' +
+      '</span>';
+    b.addEventListener("click", () => playCard(i));
+    b.addEventListener("contextmenu", (ev) => { ev.preventDefault(); discard(i); });
+    b.title = card.fl + "\n\nClick to play. Right-click to bin it for 1 minute.";
+    box.append(b);
+  });
+}
+
+// Two suits, the way Skull does it: the rose is safe, the skull can cost you.
+function emblem(risky) {
+  const ink = "rgba(10,9,7,.62)";
+  if (risky) {
+    return '<svg class="emblem" viewBox="0 0 24 24" aria-hidden="true">' +
+      '<circle cx="12" cy="9.6" r="7.4" fill="' + ink + '"/>' +
+      '<rect x="7.9" y="14.6" width="8.2" height="5.4" rx="1.7" fill="' + ink + '"/>' +
+      '<circle cx="9.3" cy="9.4" r="2.45" fill="var(--bone)"/>' +
+      '<circle cx="14.7" cy="9.4" r="2.45" fill="var(--bone)"/>' +
+      '<rect x="10.85" y="12.6" width="2.3" height="2.7" rx="1.1" fill="var(--bone)"/></svg>';
+  }
+  return '<svg class="emblem" viewBox="0 0 24 24" aria-hidden="true">' +
+    '<circle cx="12" cy="12" r="8.2" fill="' + ink + '"/>' +
+    '<circle cx="12" cy="12" r="5.5" fill="var(--bone)"/>' +
+    '<circle cx="12" cy="12" r="3.3" fill="' + ink + '"/>' +
+    '<circle cx="12" cy="12" r="1.35" fill="var(--bone)"/></svg>';
+}
+
+/* ============================== declare ============================== */
+
+function openDeclare(forced) {
+  if (G.over) return;
+  $("#declarePanel").hidden = false;
+  $("#handPanel").hidden = !!forced;
+  const st = standing();
+  const grid = $("#declareGrid");
+  grid.innerHTML = "";
+  for (const c of CAUSES) {
+    const b = el("button", "dopt" + (st[c.id].out ? " ruled" : ""));
+    b.setAttribute("aria-pressed", "false");
+    b.innerHTML = '<span class="nm">' + c.nm + '</span><span class="fl">' + c.fl + '</span>';
+    b.addEventListener("click", () => {
+      PICK.cause = c.id;
+      grid.querySelectorAll(".dopt").forEach(x => x.setAttribute("aria-pressed", "false"));
+      b.setAttribute("aria-pressed", "true");
+      syncCommit();
+    });
+    grid.append(b);
+  }
+  const cp = $("#confPick");
+  cp.innerHTML = "";
+  for (const c of CONFIDENCE) {
+    const b = el("button", "btn");
+    b.setAttribute("aria-pressed", "false");
+    b.innerHTML = c.nm + "<small>" + c.sub + "</small>";
+    b.addEventListener("click", () => {
+      PICK.conf = c.id;
+      cp.querySelectorAll(".btn").forEach(x => x.setAttribute("aria-pressed", "false"));
+      b.setAttribute("aria-pressed", "true");
+      syncCommit();
+    });
+    cp.append(b);
+  }
+  $("#btnCancelDeclare").hidden = !!forced;
+  syncCommit();
+  $("#declarePanel").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+function syncCommit() { $("#btnCommit").disabled = !(PICK.cause && PICK.conf); }
+
+/* ============================== result ============================== */
+
+function shareText() {
+  const r = G.result;
+  const trail = G.played.map(id => {
+    const p = PROBES.find(x => x.id === id);
+    if (p) return "🔍";
+    const a = ACTIONS.find(x => x.id === id);
+    return a && a.burn ? "🧨" : "🛡️";
+  }).join("");
+  return [
+    "BLAST RADIUS · " + (MODE === "daily" ? todayKey() : "practice"),
+    r.total.toLocaleString() + " pts · " + (r.correct ? "root cause found" : "wrong call"),
+    "💥 " + fmt(G.impact) + " customers · ⏱ " + G.minsLeft + " min left",
+    trail || "—"
+  ].join("\n");
+}
+
+function renderResult() {
+  const r = G.result;
+  $("#handPanel").hidden = true;
+  $("#declarePanel").hidden = true;
+  $("#resultPanel").hidden = false;
+  $("#finalScore").textContent = r.total.toLocaleString();
+  const tag = $("#verdictTag");
+  tag.textContent = r.correct ? "Root cause found" : "Wrong call";
+  tag.className = "verdict-tag " + (r.correct ? "win" : "miss");
+  const truth = CAUSES.find(c => c.id === G.cause);
+  $("#truthLine").textContent = r.correct
+    ? "It was " + truth.nm.toLowerCase() + ", and you said so."
+    : "It was " + truth.nm.toLowerCase() + ".";
+  $("#resultSub").textContent = MODE === "daily" ? "Incident " + todayKey() : "Practice run, not scored on the board";
+
+  const led = $("#ledger");
+  led.innerHTML = "";
+  for (const l of r.lines) {
+    const row = el("div", "li");
+    row.innerHTML = '<span>' + l.k + (l.sub ? '<span class="sub">' + l.sub + '</span>' : '') + '</span>' +
+      '<span class="n ' + (l.v > 0 ? "pos" : l.v < 0 ? "neg" : "") + '">' + (l.v > 0 ? "+" : "") + l.v.toLocaleString() + '</span>';
+    led.append(row);
+  }
+  const tot = el("div", "li total");
+  tot.innerHTML = '<span>Final</span><span class="n">' + r.total.toLocaleString() + '</span>';
+  led.append(tot);
+
+  // personal best for the day, which needs no backend at all
+  let best = null;
+  if (MODE === "daily") {
+    try {
+      const k = "br-best-" + todayKey();
+      const prev = Number(localStorage.getItem(k) || "-999999");
+      best = Math.max(prev, r.total);
+      if (r.total > prev) localStorage.setItem(k, String(r.total));
+    } catch (e) { best = r.total; }
+  }
+  $("#bestLine").textContent = best === null
+    ? "Practice run"
+    : (r.total >= best ? "Your best today" : "Your best today is " + best.toLocaleString());
+
+  $("#shareBox").textContent = shareText();
+  $("#lbWrap").hidden = !(BOARD.mode && MODE === "daily");
+  $("#postMsg").textContent = "";
+  $("#resultPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* ============================== leaderboard ============================== */
+/* Two backends. On Cloudflare the board is a public HTTP API; inside a Claude
+   artifact it is the artifact database. Neither present means no board. */
+
+let BOARD = { mode: null };
+let POLL = null;
+
+async function initBoard() {
+  // 1. Cloudflare Worker API
+  try {
+    const res = await fetch("/api/board?day=" + encodeURIComponent(todayKey()), { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      BOARD = { mode: "http" };
+      renderBoard(data.rows || []);
+      if (POLL) clearInterval(POLL);
+      POLL = setInterval(refreshBoard, 25000);
+      revealBoard();
+      return;
+    }
+  } catch (e) { /* not hosted with the API */ }
+
+  // 2. Claude artifact database
+  try {
+    const db = await claude.use("db");
+    if (db) {
+      BOARD = { mode: "db", db };
+      db.collection("scores/" + todayKey() + "/entries")
+        .orderBy("score", "desc").limit(12)
+        .onSnapshot((snap) => renderBoard(snap.docs.map(d => d.data())), () => {});
+      revealBoard();
+      return;
+    }
+  } catch (e) { /* no artifact runtime either */ }
+
+  BOARD = { mode: null };
+}
+
+function revealBoard() {
+  if (G && G.over && MODE === "daily") $("#lbWrap").hidden = false;
+}
+
+async function refreshBoard() {
+  if (BOARD.mode !== "http") return;
+  try {
+    const res = await fetch("/api/board?day=" + encodeURIComponent(todayKey()), { cache: "no-store" });
+    if (res.ok) renderBoard((await res.json()).rows || []);
+  } catch (e) { /* leave the last good board on screen */ }
+}
+
+function renderBoard(rows) {
+  const box = $("#lbList");
+  box.innerHTML = "";
+  if (!rows.length) {
+    box.innerHTML = '<div class="row"><span class="rk">.</span><span class="who" style="font-weight:500;color:var(--bone-3)">Nobody has posted today. Go first.</span><span></span><span></span></div>';
+    return;
+  }
+  let mine = null;
+  try { mine = localStorage.getItem("br-handle"); } catch (e) {}
+  rows.forEach((r, i) => {
+    const row = el("div", "row" + (r.who === mine ? " me" : ""));
+    row.innerHTML = '<span class="rk">' + (i + 1) + '</span>' +
+      '<span class="who"></span>' +
+      '<span class="tag2">' + (r.found ? "found it" : "missed") + ' &middot; ' + fmt(r.customers || 0) + '</span>' +
+      '<span class="sc">' + Number(r.score || 0).toLocaleString() + '</span>';
+    // handles come from other players, so they go in as text, never as markup
+    row.querySelector(".who").textContent = String(r.who || "anon").slice(0, 18);
+    box.append(row);
+  });
+}
+
+async function postScore() {
+  if (!BOARD.mode || !G.result) return;
+  const who = ($("#handleIn").value || "").trim().slice(0, 18);
+  if (!who) { $("#postMsg").textContent = "Pick a handle first."; return; }
+  try { localStorage.setItem("br-handle", who); } catch (e) {}
+
+  $("#btnPost").disabled = true;
+  $("#postMsg").textContent = "Posting...";
+  const entry = {
+    who, day: todayKey(), score: G.result.total,
+    found: G.result.correct, customers: Math.round(G.impact), minsLeft: G.minsLeft
+  };
+
+  try {
+    if (BOARD.mode === "http") {
+      const res = await fetch("/api/score", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify(entry)
+      });
+      if (!res.ok) throw new Error("rejected");
+      renderBoard((await res.json()).rows || []);
+    } else {
+      await BOARD.db.collection("scores/" + todayKey() + "/entries").add({ ...entry, at: Date.now() });
+    }
+    $("#postMsg").textContent = "On the board.";
+  } catch (e) {
+    $("#postMsg").textContent = "Could not post that one.";
+    $("#btnPost").disabled = false;
+  }
+}
+
+/* ============================== wiring ============================== */
+
+$("#btnDeclare").addEventListener("click", () => openDeclare(false));
+$("#btnCancelDeclare").addEventListener("click", () => {
+  $("#declarePanel").hidden = true;
+  $("#handPanel").hidden = false;
+});
+$("#btnCommit").addEventListener("click", () => {
+  if (PICK.cause && PICK.conf) finish(PICK.cause, PICK.conf);
+});
+$("#btnAgain").addEventListener("click", () => {
+  if (MODE === "daily") { MODE = "practice"; }
+  newGame(Math.floor(Math.random() * 1e9));
+});
+$("#modeDaily").addEventListener("click", () => { MODE = "daily"; newGame(0); });
+$("#modePractice").addEventListener("click", () => { MODE = "practice"; newGame(Math.floor(Math.random() * 1e9)); });
+$("#btnPost").addEventListener("click", postScore);
+$("#btnCopy").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(shareText());
+    $("#btnCopy").textContent = "Copied";
+    setTimeout(() => { $("#btnCopy").textContent = "Copy result"; }, 1600);
+  } catch (e) {
+    const sel = window.getSelection();
+    const rng = document.createRange();
+    rng.selectNodeContents($("#shareBox"));
+    sel.removeAllRanges(); sel.addRange(rng);
+    $("#btnCopy").textContent = "Selected, press copy";
+  }
+});
+
+try { const h = localStorage.getItem("br-handle"); if (h) $("#handleIn").value = h; } catch (e) {}
+
+newGame(0);
+initBoard();
+</script>

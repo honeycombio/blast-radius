@@ -1,0 +1,17 @@
+{
+  "name": "blast-radius",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "blast-radius",
+      "database_id": "8984b657-2728-47d2-aa8b-2e7d12d898bb"
+    }
+  ],
+  "observability": { "enabled": true }
+}
