@@ -302,6 +302,10 @@ input.handle {
 }
 input.handle::placeholder { color: var(--bone-3); }
 
+.brief .panel-head { box-shadow: inset 0 -6px 0 -3px var(--crimson); }
+.brief .panel-head h2 { color: var(--crimson); }
+.briefText { margin: 0; font-size: 14.5px; font-weight: 600; color: var(--bone); line-height: 1.5; }
+
 .stack { display: flex; flex-direction: column; gap: 13px; }
 .rowwrap { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
 
@@ -330,6 +334,16 @@ input.handle::placeholder { color: var(--bone-3); }
       </div>
     </div>
   </header>
+
+  <section class="panel brief" id="briefPanel">
+    <div class="panel-head">
+      <h2>🚨 Paged</h2>
+      <span class="hint" id="briefWhen"></span>
+    </div>
+    <div class="panel-body">
+      <p class="briefText" id="briefText"></p>
+    </div>
+  </section>
 
   <section class="gauges" id="gauges"></section>
 
@@ -440,6 +454,17 @@ function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h
 const fmt = (n) => Math.round(n).toLocaleString();
 
 /* ============================== content ============================== */
+
+// What paged you in. Every line fits any of the six causes below — the
+// symptom never gives away the diagnosis, that is what the discs are for.
+const SYMPTOMS = [
+  "Checkout success rate just fell off a cliff. Support already has six tickets open and it is getting worse.",
+  "Error rate on checkout is climbing fast. Nobody in the incident channel knows why yet.",
+  "Customers are hitting timeouts on checkout. The graphs all bend the same way: down.",
+  "Checkout latency has tripled in the last five minutes and it is not settling.",
+  "The on-call channel just lit up. A growing slice of checkout traffic is failing outright.",
+  "Checkout is throwing errors for a widening set of customers, and the on-call rotation just paged you in."
+];
 
 const CAUSES = [
   { id: "c1", nm: "Bad config push",    fl: "A flag went to 100% and nobody watched it" },
@@ -557,6 +582,7 @@ function newGame(practiceSeedBump) {
   const rng = mulberry32(hashStr(key));
 
   const cause = CAUSES[Math.floor(rng() * CAUSES.length)].id;
+  const symptom = SYMPTOMS[Math.floor(rng() * SYMPTOMS.length)];
 
   const deck = [
     ...PROBES.map(p => ({ ...p, kind: "probe" })),
@@ -577,7 +603,7 @@ function newGame(practiceSeedBump) {
 
   G = {
     key, seedLabel: MODE === "daily" ? todayKey() : "practice " + practiceSeedBump,
-    cause, deck, liars,
+    cause, symptom, deck, liars,
     hand: [], played: [], clues: [],
     minsLeft: START_MIN, impact: 0, rate: BASE_RATE,
     over: false, result: null
@@ -704,6 +730,9 @@ function render() {
     : "Practice run";
   $("#modeDaily").setAttribute("aria-pressed", String(MODE === "daily"));
   $("#modePractice").setAttribute("aria-pressed", String(MODE === "practice"));
+
+  $("#briefText").textContent = G.symptom;
+  $("#briefWhen").textContent = MODE === "daily" ? "Incident " + todayKey() : "Practice run";
 
   renderGauges();
   renderSuspects();
