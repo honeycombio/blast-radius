@@ -931,7 +931,8 @@ function shareText() {
     "BLAST RADIUS · " + (MODE === "daily" ? todayKey() : "practice"),
     r.total.toLocaleString() + " pts · " + (r.correct ? "root cause found" : "wrong call"),
     "💥 " + fmt(G.impact) + " customers · ⏱ " + G.minsLeft + " min left",
-    trail || "—"
+    trail || "—",
+    location.origin + location.pathname
   ].join("\n");
 }
 
