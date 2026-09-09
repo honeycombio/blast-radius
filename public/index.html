@@ -504,7 +504,7 @@ const PROBES = [
   { id: "deploy", t: "Read the deploy log", cost: 2, conf: "high", hit: ["c1"],
     fl: "Thirty seconds of scrolling. Usually the fastest answer in the building.",
     yes: "A change to <code>checkout_v2</code> went to 100% four minutes before onset.",
-    no:  "Last deploy was six days ago. Nothing shipped today." },
+    no:  "Last deploy shipped two hours before onset, clean, and nothing has gone out since." },
 
   { id: "clients", t: "Break errors down by client", cost: 3, conf: "high", hit: ["c2"],
     fl: "Group the failures by SDK version and see who is shouting loudest.",
