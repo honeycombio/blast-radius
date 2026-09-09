@@ -40,6 +40,7 @@
   --gold:    #F6B923;
   --jade:    #2FBE84;
   --ember:   #F17A2E;
+  --highlight: #8A1359;
   --font-display: "Baloo 2", Impact, "Arial Narrow Bold", sans-serif;
 }
 
@@ -107,7 +108,7 @@ code {
 .btn:disabled { opacity: .35; cursor: not-allowed; }
 .btn.primary { background: var(--gold); color: var(--key); }
 .btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
-#btnDeclare { font-size: 13px; padding: 10px 20px; box-shadow: 0 3px 0 var(--key); }
+.btn.cta { font-size: 13px; padding: 10px 20px; box-shadow: 0 3px 0 var(--key); }
 
 :where(button, input, [tabindex]):focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
@@ -137,17 +138,17 @@ code {
 
 /* ---------- panels ---------- */
 
-.panel { background: var(--felt); border: 3px solid var(--key); border-radius: 18px; overflow: hidden; }
+.panel { background: var(--felt); border: 3px solid var(--key); border-radius: 18px; overflow: hidden; --panel-accent: var(--gold); }
 .panel-head {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
   gap: 10px; padding: 13px 18px; background: var(--raise);
   border-bottom: 3px solid var(--key);
-  box-shadow: inset 0 -6px 0 -3px var(--gold);
+  box-shadow: inset 0 -6px 0 -3px var(--panel-accent);
 }
 .panel-head h2 {
   margin: 0; font-family: var(--font-display); font-weight: 800;
   font-size: 20px; letter-spacing: .02em; text-transform: uppercase;
-  color: var(--gold);
+  color: var(--panel-accent);
 }
 .panel-head .hint { color: var(--bone-3); font-size: 12px; }
 .panel-body { padding: 16px 18px 18px; }
@@ -177,7 +178,7 @@ code {
 .suspect.out { opacity: .34; }
 .suspect.lean .pip { background: var(--cobalt); }
 .suspect.lean .tag { color: var(--cobalt); }
-.suspect.hot { background: #8A1359; }
+.suspect.hot { background: var(--highlight); }
 .suspect.hot .pip { background: var(--crimson); }
 .suspect.hot .tag { background: var(--crimson); color: var(--key); }
 
@@ -291,7 +292,7 @@ code {
 .lb { display: flex; flex-direction: column; gap: 2px; }
 .lb .row { display: grid; grid-template-columns: 34px 1fr auto auto; gap: 12px; align-items: center;
   background: var(--raise); border: 2px solid var(--key); border-radius: 10px; padding: 9px 13px; font-size: 13px; }
-.lb .row.me { background: #8A1359; }
+.lb .row.me { background: var(--highlight); }
 .lb .rk { font-family: var(--font-display); font-weight: 800; font-size: 17px; color: var(--bone-3); }
 .lb .who { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lb .tag2 { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--bone-3); }
@@ -303,13 +304,13 @@ input.handle {
 }
 input.handle::placeholder { color: var(--bone-3); }
 
-.brief .panel-head { box-shadow: inset 0 -6px 0 -3px var(--crimson); }
-.brief .panel-head h2 { color: var(--crimson); }
+.brief { --panel-accent: var(--crimson); }
 .briefText { margin: 0; font-size: 14.5px; font-weight: 600; color: var(--bone); line-height: 1.5; }
 
 /* ---------- mini leaderboard (visible during play) ---------- */
 
 .mini-lb { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; max-width: 320px; }
+.mini-lb[hidden] { display: none; }
 .mini-lb .tag {
   font-size: 9.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--bone-3);
   margin-right: 2px;
@@ -319,7 +320,7 @@ input.handle::placeholder { color: var(--bone-3); }
   background: var(--raise); border: 1.5px solid var(--key); border-radius: 999px;
   padding: 3px 10px; font-size: 11px; font-weight: 700; color: var(--bone-2); white-space: nowrap;
 }
-.mini-lb .chip.me { background: #8A1359; color: var(--bone); }
+.mini-lb .chip.me { background: var(--highlight); color: var(--bone); }
 .mini-lb .chip .sc { color: var(--gold); font-weight: 800; }
 
 .stack { display: flex; flex-direction: column; gap: 13px; }
@@ -370,7 +371,7 @@ input.handle::placeholder { color: var(--bone-3); }
       <span class="hint" id="handHint">Every card costs minutes, and minutes cost customers. Right-click a card to bin it for 1 minute.</span>
       <div class="rowwrap">
         <span class="deckcount" id="deckCount"></span>
-        <button class="btn primary" id="btnDeclare">Name the cause</button>
+        <button class="btn primary cta" id="btnDeclare">Name the cause</button>
       </div>
     </div>
     <div class="panel-body">
@@ -632,6 +633,7 @@ function newGame(practiceSeedBump) {
   $("#resultPanel").hidden = true;
   $("#handPanel").hidden = false;
   render();
+  renderMiniBoard();
 }
 
 function draw() {
@@ -751,7 +753,6 @@ function render() {
 
   $("#briefText").textContent = G.symptom;
   $("#briefWhen").textContent = MODE === "daily" ? "Incident " + todayKey() : "Practice run";
-  renderMiniBoard();
 
   renderGauges();
   renderSuspects();
@@ -964,7 +965,7 @@ function renderResult() {
     : (r.total >= best ? "Your best today" : "Your best today is " + best.toLocaleString());
 
   $("#shareBox").textContent = shareText();
-  $("#lbWrap").hidden = !(BOARD.mode && MODE === "daily");
+  $("#lbWrap").hidden = !boardActive();
   $("#postMsg").textContent = "";
   $("#resultPanel").scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -975,6 +976,10 @@ function renderResult() {
 
 let BOARD = { mode: null };
 let POLL = null;
+
+// The board only counts for the shared daily incident, never practice runs.
+function boardActive() { return MODE === "daily" && !!BOARD.mode; }
+function myHandle() { try { return localStorage.getItem("br-handle"); } catch (e) { return null; } }
 
 async function initBoard() {
   // 1. Cloudflare Worker API
@@ -1008,7 +1013,7 @@ async function initBoard() {
 }
 
 function revealBoard() {
-  if (G && G.over && MODE === "daily") $("#lbWrap").hidden = false;
+  if (G && G.over && boardActive()) $("#lbWrap").hidden = false;
 }
 
 async function refreshBoard() {
@@ -1028,8 +1033,7 @@ function renderBoard(rows) {
   if (!rows.length) {
     box.innerHTML = '<div class="row"><span class="rk">.</span><span class="who" style="font-weight:500;color:var(--bone-3)">Nobody has posted today. Go first.</span><span></span><span></span></div>';
   } else {
-    let mine = null;
-    try { mine = localStorage.getItem("br-handle"); } catch (e) {}
+    const mine = myHandle();
     rows.forEach((r, i) => {
       const row = el("div", "row" + (r.who === mine ? " me" : ""));
       row.innerHTML = '<span class="rk">' + (i + 1) + '</span>' +
@@ -1049,9 +1053,8 @@ function renderBoard(rows) {
 function renderMiniBoard() {
   const box = $("#miniLb");
   if (!box) return;
-  const show = MODE === "daily" && !!BOARD.mode;
-  box.hidden = !show;
-  if (!show) return;
+  box.hidden = !boardActive();
+  if (box.hidden) return;
 
   box.innerHTML = "";
   const tag = el("span", "tag"); tag.textContent = "Today's board"; box.append(tag);
@@ -1060,8 +1063,7 @@ function renderMiniBoard() {
     const chip = el("span", "chip"); chip.textContent = "Be the first to post"; box.append(chip);
     return;
   }
-  let mine = null;
-  try { mine = localStorage.getItem("br-handle"); } catch (e) {}
+  const mine = myHandle();
   LAST_ROWS.slice(0, 5).forEach((r, i) => {
     const chip = el("span", "chip" + (r.who === mine ? " me" : ""));
     const nm = document.createElement("span");
@@ -1073,7 +1075,7 @@ function renderMiniBoard() {
 }
 
 async function postScore() {
-  if (!BOARD.mode || !G.result || MODE !== "daily") return;
+  if (!boardActive() || !G.result) return;
   const who = ($("#handleIn").value || "").trim().slice(0, 18);
   if (!who) { $("#postMsg").textContent = "Pick a handle first."; return; }
   try { localStorage.setItem("br-handle", who); } catch (e) {}
