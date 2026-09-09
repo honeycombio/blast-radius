@@ -1073,7 +1073,7 @@ function renderMiniBoard() {
 }
 
 async function postScore() {
-  if (!BOARD.mode || !G.result) return;
+  if (!BOARD.mode || !G.result || MODE !== "daily") return;
   const who = ($("#handleIn").value || "").trim().slice(0, 18);
   if (!who) { $("#postMsg").textContent = "Pick a handle first."; return; }
   try { localStorage.setItem("br-handle", who); } catch (e) {}
