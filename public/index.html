@@ -474,15 +474,20 @@ const fmt = (n) => Math.round(n).toLocaleString();
 
 /* ============================== content ============================== */
 
+// Which surface broke today. The failure archetypes below don't change,
+// so this is what makes one day's page feel different from the next.
+const SERVICES = ["checkout", "search", "login", "notifications", "billing"];
+
 // What paged you in. Every line fits any of the six causes below — the
 // symptom never gives away the diagnosis, that is what the discs are for.
+// {service} is filled in with the day's affected surface.
 const SYMPTOMS = [
-  "Checkout success rate just fell off a cliff. Support already has six tickets open and it is getting worse.",
-  "Error rate on checkout is climbing fast. Nobody in the incident channel knows why yet.",
-  "Customers are hitting timeouts on checkout. The graphs all bend the same way: down.",
-  "Checkout latency has tripled in the last five minutes and it is not settling.",
-  "The on-call channel just lit up. A growing slice of checkout traffic is failing outright.",
-  "Checkout is throwing errors for a widening set of customers, and the on-call rotation just paged you in."
+  "{Service} success rate just fell off a cliff. Support already has six tickets open and it is getting worse.",
+  "Error rate on {service} is climbing fast. Nobody in the incident channel knows why yet.",
+  "Customers are hitting timeouts on {service}. The graphs all bend the same way: down.",
+  "Latency on {service} has tripled in the last five minutes and it is not settling.",
+  "The on-call channel just lit up. A growing slice of {service} traffic is failing outright.",
+  "{Service} is throwing errors for a widening set of customers, and the on-call rotation just paged you in."
 ];
 
 const CAUSES = [
@@ -506,7 +511,7 @@ const PROBES = [
     yes: "Volume is 6x normal, almost all of it three old SDK versions retrying with no backoff.",
     no:  "Traffic is flat and evenly spread across every client version." },
 
-  { id: "pool", t: "Check the connection pool", cost: 2, conf: "high", hit: ["c3"],
+  { id: "pool", t: "Check the connection pool", cost: 2, conf: "med", hit: ["c3"],
     fl: "One number tells you whether the database is the victim or the culprit.",
     yes: "Pool is pinned at 100% with 800 queries queued behind it.",
     no:  "Pool is sitting at 12%. Plenty of headroom." },
@@ -526,7 +531,7 @@ const PROBES = [
     yes: "Their status page finally went amber: <code>investigating elevated errors</code>.",
     no:  "All green. They say everything is fine." },
 
-  { id: "trace", t: "Pull a trace from a failing request", cost: 4, conf: "high", hit: ["c3", "c4", "c6"],
+  { id: "trace", t: "Pull a trace from a failing request", cost: 4, conf: "med", hit: ["c3", "c4", "c6"],
     fl: "Expensive in minutes. Cuts through three theories at once.",
     yes: "The span <code>payments-gw.call</code> hangs for 30s and dies on connection reset.",
     no:  "Failure starts in the app tier, before anything downstream is even called." },
@@ -582,6 +587,7 @@ const CONFIDENCE = [
 const START_MIN = 30;
 const BASE_RATE = 300;      // customers per minute at full severity
 const HAND_SIZE = 5;
+const ESCALATION = 1.015;   // per minute: left alone, it gets worse, whatever you're doing
 
 /* ============================== state ============================== */
 
@@ -601,7 +607,10 @@ function newGame(practiceSeedBump) {
   const rng = mulberry32(hashStr(key));
 
   const cause = CAUSES[Math.floor(rng() * CAUSES.length)].id;
-  const symptom = SYMPTOMS[Math.floor(rng() * SYMPTOMS.length)];
+  const service = SERVICES[Math.floor(rng() * SERVICES.length)];
+  const symptom = SYMPTOMS[Math.floor(rng() * SYMPTOMS.length)]
+    .replace("{Service}", service[0].toUpperCase() + service.slice(1))
+    .replace("{service}", service);
 
   const deck = [
     ...PROBES.map(p => ({ ...p, kind: "probe" })),
@@ -646,6 +655,9 @@ function spend(mins) {
   const used = Math.min(mins, G.minsLeft);
   G.impact += G.rate * used;
   G.minsLeft -= used;
+  // Every minute that passes makes things a little worse, investigating or
+  // not — so stalling on a full diagnosis before acting has a real cost.
+  G.rate *= Math.pow(ESCALATION, used);
 }
 
 function playCard(idx) {
